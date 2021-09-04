@@ -1,2 +1,2 @@
 **Disclaimer:** 
-May contain very improfessional, absurd and unreasonable content.
+May contain very improfessional, absurd, unstable and unreasonable content.
