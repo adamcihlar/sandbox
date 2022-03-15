@@ -1,5 +1,7 @@
 
 import numpy as np
+from statsmodels.tsa.api import VAR
+import matplotlib.pyplot as plt
 
 def generate_data(shape=(100, 2), with_bias=True):
     rand_mat = np.ones(shape)
@@ -35,7 +37,7 @@ def rmse(y_true, y_hat):
     return (np.mean((y_hat - y_true)**2))**(1/2)
 
 
-def estimate_var(data, order=1, lr=0.0001, n_iter=20000):
+def estimate_var(data, order=1, lr=0.0001, n_iter=20000, display_info=False):
     x, y = expand_data(data=data, order=order)
 
     beta = np.random.standard_normal((y.shape[1], x.shape[1]))
@@ -47,15 +49,30 @@ def estimate_var(data, order=1, lr=0.0001, n_iter=20000):
             print(rmse(y, x.dot(beta.T)))
     return beta.T
 
-from statsmodels.tsa.api import VAR
+
+def impulse_response_func(beta, periods=20):
+    x0 = np.ones(1)
+    irf = np.zeros((beta.shape[1], periods))
+    shock = np.ones(beta.shape[1])
+
+    irf[:,0] = beta[0,:] + shock
+
+    for i in range(1, irf.shape[1]):
+        x = np.concatenate([x0, irf[:,i-1]])
+        irf[:,i] = beta.T.dot(x.T)
+
 
 if __name__=='__main__':
 
     data = generate_data()
-    beta = estimate_var(data, order=2)
+    beta = estimate_var(data, order=1)
 
     model = VAR(data)
-    model_fitted = model.fit(2)
+    model_fitted = model.fit(1)
     model_fitted.params
+    irf = model_fitted.irf(10)
+
+    irf.plot()
+    plt.savefig('assets/irf.png')
 
     beta - model_fitted.params
