@@ -25,8 +25,8 @@ def expand_data(data, order=1, bias=True):
     x = data[:, shp[1]:]
 
     if bias:
-        ones = np.ones((x.shape[0], shp[1]))
-        x = np.column_stack([ones, x])
+       ones = np.ones((x.shape[0]))
+       x = np.column_stack([ones, x])
 
     return x, y
 
@@ -35,18 +35,27 @@ def rmse(y_true, y_hat):
     return (np.mean((y_hat - y_true)**2))**(1/2)
 
 
-def estimate_var(x, y, lr=0.0001, n_iter=1000):
+def estimate_var(data, order=1, lr=0.0001, n_iter=20000):
+    x, y = expand_data(data=data, order=order)
+
     beta = np.random.standard_normal((y.shape[1], x.shape[1]))
     for i in range(n_iter):
         grad = (beta.dot(x.T) - y.T).dot(x)
         beta -= (lr * grad)
-        if (i % 20 == 0):
+        if (i % 1000 == 0):
+            print(beta)
             print(rmse(y, x.dot(beta.T)))
-    return beta
+    return beta.T
+
+from statsmodels.tsa.api import VAR
 
 if __name__=='__main__':
 
     data = generate_data()
-    x, y = expand_data(data, order=1)
+    beta = estimate_var(data, order=2)
 
-    beta = estimate_var(x, y)
+    model = VAR(data)
+    model_fitted = model.fit(2)
+    model_fitted.params
+
+    beta - model_fitted.params
